@@ -15,7 +15,9 @@ window.onload = function startGame() {
 
 var stateFunctions = {
   gameplay: G_Gameplay,
-  menu: G_MainMenu
+  menu: G_MainMenu,
+  scores: G_Scores,
+  scoreEntry: G_ScoreEntry
 };
 
 function updateAndRenderGame(gameState, timestep) {

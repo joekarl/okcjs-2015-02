@@ -26,8 +26,13 @@ var G_MainMenu = (function(){
       if (menu.menuIndex == 0) {
         gameState.state = "gameplay";
         input.clearKey(keyBindings.ENTER);
+        return;
       }
-      return;
+      if (menu.menuIndex == 1) {
+        gameState.state = "scores";
+        input.clearKey(keyBindings.ENTER);
+        return;
+      }
     }
 
     menu.changeLatency--;

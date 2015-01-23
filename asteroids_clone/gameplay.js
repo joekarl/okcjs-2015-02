@@ -31,7 +31,8 @@ var G_Gameplay = (function(){
       pauseLatency: 0,
       changingLevel: true,
       scanlines: [],
-      once: true
+      once: true,
+      highscore: false
     };
 
     var loadCount = 0;
@@ -114,6 +115,12 @@ var G_Gameplay = (function(){
       return;
     }
 
+    if (gameState.input.isActive(keyBindings.ESCAPE) && gameplay.gameover && gameplay.highscore) {
+      gameState.state = "scoreEntry";
+      gameState.transition = gameplay.score;
+      return;
+    }
+
     if (gameState.input.isActive(keyBindings.ESCAPE) && gameplay.gameover) {
       gameState.state = "menu";
       return;
@@ -166,6 +173,10 @@ var G_Gameplay = (function(){
     if (gameplay.lives <= 0 && !gameplay.gameover) {
       gameplay.gameover = true;
       gameState.gameplay.thrustSound.pause();
+      // check for high score
+      if (G_Scores.checkHighScore(gameplay.score)) {
+        gameplay.highscore = true;
+      }
     }
 
     if (gameplay.planets.length == 0 && !gameplay.levelComplete) {
@@ -326,6 +337,11 @@ var G_Gameplay = (function(){
         ctx.fillText("Game Over", gameState.width / 2 - 75, gameState.height / 2 - 75);
         ctx.font = "14px monospace";
         ctx.fillText("Esc to quit", gameState.width / 2 - 50, gameState.height / 2 - 50);
+        if (gameplay.highscore) {
+          ctx.fillStyle = "#FFFF00";
+          ctx.font = "24px monospace";
+          ctx.fillText("New High Score!", gameState.width / 2 - 110, gameState.height / 2);
+        }
         ctx.restore();
       }
     }
