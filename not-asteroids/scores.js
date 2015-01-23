@@ -1,5 +1,6 @@
 var G_Scores = (function(){
   var maxScores = 10;
+  var scoreKey = "not-asteroids.scores";
   var keyBindings = {
     ESCAPE: 27,
     DELETE: 46,
@@ -29,7 +30,7 @@ var G_Scores = (function(){
     }
 
     if (input.isActive(keyBindings.DELETE)) {
-      localStorage.removeItem("scores");
+      localStorage.removeItem(scoreKey);
       gameState.scores.scoreList = getHighScores();
       scoreList = gameState.scores.scoreList;
       return;
@@ -90,11 +91,11 @@ var G_Scores = (function(){
         }
       }
     }
-    localStorage.setItem("scores", JSON.stringify(scores));
+    localStorage.setItem(scoreKey, JSON.stringify(scores));
   }
 
   function getHighScores() {
-    var scoresStr = localStorage.getItem("scores");
+    var scoresStr = localStorage.getItem(scoreKey);
     var scores;
     if (scoresStr) {
       return JSON.parse(scoresStr);
@@ -105,19 +106,13 @@ var G_Scores = (function(){
 
   function checkHighScore(score) {
     // load scores
-    var scoresStr = localStorage.getItem("scores");
-    var scores;
-    if (scoresStr) {
-      scores = JSON.parse(scoresStr);
-      if (scores.length < maxScores) {
-        return true;
-      } else if (scores[maxScores].score < scoresStr) {
-        return true;
-      } else {
-        return false;
-      }
-    } else {
+    var scores = getHighScores();
+    if (scores.length < maxScores) {
       return true;
+    } else if (scores[maxScores].score < score) {
+      return true;
+    } else {
+      return false;
     }
   }
 
