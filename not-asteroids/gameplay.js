@@ -212,7 +212,7 @@ var G_Gameplay = (function(){
       y: 0
     };
 
-    if (gameState.input.isActive(keyBindings.SPACE) && !gameplay.laserFired) {
+    if (gameState.input.isActive(keyBindings.SPACE) && !gameplay.laserFired && !gameplay.gameover) {
       gameplay.lasers.push(new Laser(gameplay.ship));
       gameplay.laserFired = true;
       gameplay.laserSound.play();
@@ -236,43 +236,45 @@ var G_Gameplay = (function(){
       }
     }
 
-    // update locations
-    gameplay.ship.update(gameState);
-
-    for (i = 0; i < laserCount; ++i) {
-      if (gameplay.lasers[i].life < 0) {
-        gameplay.lasers.splice(i, 1);
-        laserCount--;
-        continue;
-      }
-      gameplay.lasers[i].update(gameState);
-    }
-
     for (i = 0; i < gameplay.planets.length; ++i) {
       gameplay.planets[i].update(gameState);
     }
 
-    // check for collisions
-    for (i = 0; i < laserCount; ++i) {
-      p.x = gameplay.lasers[i].x;
-      p.y = gameplay.lasers[i].y;
-      for (j = 0; j < planetCount; ++j) {
-        if (pointInPolygon(p, gameplay.planets[j].vertices, gameplay.planets[j].x, gameplay.planets[j].y)) {
-          gameplay.lasers[i].life = -1;
-          gameplay.planets[j].isDead = true;
-          gameplay.score += 10;
-          break;
+    if (!gameplay.gameover) {
+      // update locations
+      gameplay.ship.update(gameState);
+
+      for (i = 0; i < laserCount; ++i) {
+        if (gameplay.lasers[i].life < 0) {
+          gameplay.lasers.splice(i, 1);
+          laserCount--;
+          continue;
+        }
+        gameplay.lasers[i].update(gameState);
+      }
+
+      // check for collisions
+      for (i = 0; i < laserCount; ++i) {
+        p.x = gameplay.lasers[i].x;
+        p.y = gameplay.lasers[i].y;
+        for (j = 0; j < planetCount; ++j) {
+          if (pointInPolygon(p, gameplay.planets[j].vertices, gameplay.planets[j].x, gameplay.planets[j].y)) {
+            gameplay.lasers[i].life = -1;
+            gameplay.planets[j].isDead = true;
+            gameplay.score += 10;
+            break;
+          }
         }
       }
-    }
 
-    p.x = gameplay.ship.x;
-    p.y = gameplay.ship.y;
-    for (j = 0; j < planetCount; ++j) {
-      if (pointInPolygon(p, gameplay.planets[j].vertices, gameplay.planets[j].x, gameplay.planets[j].y) && gameplay.ship.invulnerable <= 0 && !gameplay.ship.isDead) {
-        gameplay.lives -= 1;
-        gameplay.ship.isDead = true;
-        break;
+      p.x = gameplay.ship.x;
+      p.y = gameplay.ship.y;
+      for (j = 0; j < planetCount; ++j) {
+        if (pointInPolygon(p, gameplay.planets[j].vertices, gameplay.planets[j].x, gameplay.planets[j].y) && gameplay.ship.invulnerable <= 0 && !gameplay.ship.isDead) {
+          gameplay.lives -= 1;
+          gameplay.ship.isDead = true;
+          break;
+        }
       }
     }
   }
