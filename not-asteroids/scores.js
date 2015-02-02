@@ -78,19 +78,19 @@ var G_Scores = (function(){
   function addHighScore(name, score) {
     var scores = getHighScores();
     var score = new Score(name, score);
-    var i;
-    if (scores.length < maxScores) {
-      scores.push(score);
-    } else {
-      for (i = maxScores - 1; i >= 0; --i) {
-        if (scores[i] > score) {
-          // find the first higher score, add score after it
-          scores.splice(i, 0, score);
-          scores = scores.slice(0, 5);
-          break;
-        }
+    var i, addedScore;
+    for (i = 0; i < scores.length; ++i) {
+      if (scores[i].score < score.score) {
+        // find the first higher score, add score after it
+        scores.splice(i, 0, score);
+        addedScore = true;
+        break;
       }
     }
+    if (!addedScore) {
+      scores.push(score);
+    }
+    scores = scores.slice(0, maxScores > scores.length ? maxScores : scores.length);
     localStorage.setItem(scoreKey, JSON.stringify(scores));
   }
 
@@ -109,7 +109,7 @@ var G_Scores = (function(){
     var scores = getHighScores();
     if (scores.length < maxScores) {
       return true;
-    } else if (scores[maxScores].score < score) {
+    } else if (scores[maxScores - 1].score < score) {
       return true;
     } else {
       return false;
