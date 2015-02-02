@@ -147,9 +147,9 @@ var G_Gameplay = (function(){
         // noop
       } else {
         updateGameObjects(gameState);
-        gameState.gameplay.previousTimestep = timestep;
       }
     }
+    gameState.gameplay.previousTimestep = timestep;
 
     // clear canvas
     ctx.save();
