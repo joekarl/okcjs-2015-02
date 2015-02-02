@@ -27,12 +27,12 @@ function updateAndRenderGame(gameState, timestep) {
       stateFunctions[gameState.previousState].cleanup(gameState);
     }
     if (stateFunctions[gameState.state]) {
-      stateFunctions[gameState.state].init(gameState);
+      stateFunctions[gameState.state].init(gameState, timestep);
     }
     gameState.previousState = gameState.state;
   }
 
-  stateFunctions[gameState.state].updateRender(gameState);
+  stateFunctions[gameState.state].updateRender(gameState, timestep);
 
   window.requestAnimationFrame(updateAndRenderGame.bind(null, gameState));
 }
