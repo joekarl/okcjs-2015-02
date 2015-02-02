@@ -10,7 +10,8 @@ var G_Gameplay = (function(){
     Q:      81,
   };
 
-  function initGameplay(gameState) {
+  // timestep: fractional time in millis
+  function initGameplay(gameState, timestep) {
     var i, y;
     gameState.gameplay = {
       loading: true,
@@ -32,7 +33,9 @@ var G_Gameplay = (function(){
       changingLevel: true,
       scanlines: [],
       once: true,
-      highscore: false
+      highscore: false,
+      previousTimestep: timestep,
+      currentTimestep: timestep
     };
 
     var loadCount = 0;
@@ -70,15 +73,17 @@ var G_Gameplay = (function(){
     }
   }
 
-  function updateRenderGameplay(gameState) {
+  function updateRenderGameplay(gameState, timestep) {
     var ctx = gameState.ctx2d;
     var gameplay = gameState.gameplay;
     var i;
 
     if (gameplay.loading) {
       // do something not terrible here
+      gameplay.previousTimestep = timestep;
       return;
     }
+    gameplay.currentTimestep = timestep;
 
     if (gameplay.once) {
       gameState.gameplay.thrustSound.play();
@@ -98,6 +103,7 @@ var G_Gameplay = (function(){
       gameplay.paused = !gameplay.paused;
       if (gameplay.paused) {
         gameState.gameplay.thrustSound.pause();
+        gameState.gameplay.previousTimestep = timestep; // the past is the present, let time stand still
       } else {
         gameState.gameplay.thrustSound.play();
         gameState.gameplay.thrustSound.volume = 0.2;
@@ -143,6 +149,7 @@ var G_Gameplay = (function(){
         updateGameObjects(gameState);
       }
     }
+    gameState.gameplay.previousTimestep = timestep;
 
     // clear canvas
     ctx.save();
@@ -448,11 +455,12 @@ var G_Gameplay = (function(){
 
   Planet.prototype.update = function(gameState) {
 
+    var dt = (gameState.gameplay.currentTimestep - gameState.gameplay.previousTimestep) / 20;
     var vx = Math.cos((Math.PI/180) * this.angle) * this.velocity;
     var vy = Math.sin((Math.PI/180) * this.angle) * this.velocity;
 
-    this.x += vx;
-    this.y += vy;
+    this.x += vx * dt;
+    this.y += vy * dt;
 
     if (this.x < 0) {
       this.x += gameState.width;
@@ -494,8 +502,9 @@ var G_Gameplay = (function(){
   Laser.prototype.update = function(gameState) {
     this.life--;
 
-    this.x += this.vx;
-    this.y += this.vy;
+    var dt = (gameState.gameplay.currentTimestep - gameState.gameplay.previousTimestep) / 20;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
 
     if (this.x < 0 || this.x > gameState.width ||
       this.y < 0 || this.y > gameState.height) {
@@ -516,16 +525,21 @@ var G_Gameplay = (function(){
     this.invulnerable = 200;
     this.x = 400;
     this.y = 300;
+    this.vx = 0;
+    this.vy = 0;
     this.thrust = 0;
     this.angle = -90;
     this.thrusting = false;
   }
+
+  Ship.ACCELERATION = 0.1;
 
   Ship.prototype.update = function(gameState) {
     this.invulnerable -= 1;
     if (this.invulnerable < 0) {
       this.invulnerable = 0;
     }
+    var dt = (gameState.gameplay.currentTimestep - gameState.gameplay.previousTimestep) / 20;
     var input = gameState.input;
     if (input.isActive(keyBindings.LEFT)) {
       this.angle -= 2.5;
@@ -534,28 +548,23 @@ var G_Gameplay = (function(){
       this.angle += 2.5;
     }
     if (input.isActive(keyBindings.UP)) {
-      this.thrust += 1;
+      this.thrust = Ship.ACCELERATION * dt;
       this.thrusting = true;
       if (!this.isDead) {
         gameState.gameplay.thrustSound.volume = 1;
       }
     } else {
       this.thrusting = false;
+      this.thrust = 0;
       gameState.gameplay.thrustSound.volume = 0.2;
     }
 
-    this.thrust -= 0.15;
-    if (this.thrust < 0) {
-      this.thrust = 0;
-    } else if (this.thrust > 5) {
-      this.thrust = 5;
-    }
 
-    var vx = Math.cos((Math.PI/180) * this.angle) * this.thrust;
-    var vy = Math.sin((Math.PI/180) * this.angle) * this.thrust;
+    this.vx += Math.cos((Math.PI/180) * this.angle) * this.thrust;
+    this.vy += Math.sin((Math.PI/180) * this.angle) * this.thrust;
 
-    this.x += vx;
-    this.y += vy;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
 
     if (this.x < 0) {
       this.x += gameState.width;
