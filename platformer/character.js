@@ -9,17 +9,20 @@ var G_Character = (function(){
 
   var SQRT_2 = 1.41421356237;
   var HALF_SQRT_2 = 1 / SQRT_2;
-  var SKEW_X = 0;//1;
-  var SKEW_Y = 0;//0.8;
   var SPEED = 1.5;
   var GRAVITY = -1.2;
   var JUMP_VELOCITY = 15;
-  var width = 52;
-  var height = 52;
+  var width = 24;
+  var height = 32;
+  var drawWidth = 52;
+  var drawHeight = 52;
   var spriteWidth = 75;
   var spriteHeight = 75;
   var halfWidth = width / 2;
   var halfHeight = height / 2;
+  var halfDrawWidth = drawWidth / 2;
+  var halfDrawHeight = drawHeight / 2;
+  var spriteOffsetY = -halfDrawHeight - (halfDrawHeight - halfHeight);
 
   var animationStates = {
     STANDING: {
@@ -35,8 +38,8 @@ var G_Character = (function(){
           frameX * spriteWidth,
           frameY * spriteHeight,
           spriteWidth, spriteHeight,
-          -halfWidth, -halfHeight,
-          width, height);
+          -halfDrawWidth,  spriteOffsetY,
+          drawWidth, drawHeight);
       }
     },
     WALKING: {
@@ -48,13 +51,12 @@ var G_Character = (function(){
         var frameX = (frame / 8) % 5;
         frameX = Math.floor(frameX);
 
-
         ctx.drawImage(sprite,
           frameX * spriteWidth,
           frameY * spriteHeight,
           spriteWidth, spriteHeight,
-          -halfWidth, -halfHeight,
-          width, height);
+          -halfDrawWidth, spriteOffsetY,
+          drawWidth, drawHeight);
       }
     },
     RUNNING: {
@@ -80,8 +82,8 @@ var G_Character = (function(){
           frameX * spriteWidth,
           frameY * spriteHeight,
           spriteWidth, spriteHeight,
-          -halfWidth, -halfHeight,
-          width, height);
+          -halfDrawWidth, spriteOffsetY,
+          drawWidth, drawHeight);
       }
     },
     JUMPING: {
@@ -102,10 +104,28 @@ var G_Character = (function(){
           frameX * spriteWidth,
           frameY * spriteHeight,
           spriteWidth, spriteHeight,
-          -halfWidth, -halfHeight,
-          width, height);
+          -halfDrawWidth, spriteOffsetY,
+          drawWidth, drawHeight);
       }
-    }
+    },
+    DYING: {
+      render: function(character, gameState) {
+        var ctx = gameState.ctx2d;
+        var sprite = character.characterImage;
+        var frame = character.animationState.frame;
+        var frameX;
+        var frameY = 4;
+        frameX = (frame / 16) % 6;
+        frameX = Math.floor(frameX);
+
+        ctx.drawImage(sprite,
+          frameX * spriteWidth,
+          frameY * spriteHeight,
+          spriteWidth, spriteHeight,
+          -halfDrawWidth, spriteOffsetY,
+          drawWidth, drawHeight);
+      }
+    },
   };
 
   function clamp(val, min, max) {
@@ -137,6 +157,7 @@ var G_Character = (function(){
     this.jumping = false;
     this.jumped = false;
     this.right = true;
+    this.dying = false;
     this.animationState = {
       state: animationStates.STANDING,
       frame: 0,
@@ -144,22 +165,17 @@ var G_Character = (function(){
     this.characterImage = characterImage;
   }
 
+  Character.prototype.die = function() {
+    this.animationState.state = animationStates.DYING;
+    this.animationState.frame = 0;
+    this.dying = true;
+  }
+
   Character.prototype.render = function(gameState) {
     var ctx = gameState.ctx2d;
-    var i;
-    var horizontalSkew = this.vx == 0 ? 0 : this.vx * SKEW_X;
-    var verticalSkew = this.vy == 0 ? 0 : this.vy * -SKEW_Y;
 
     ctx.save();
     ctx.translate(this.x, this.y);
-
-    // ctx.fillStyle = "#FFF";
-    // ctx.beginPath();
-    // ctx.moveTo(-halfWidth, -halfHeight);
-    // ctx.lineTo(halfWidth, -halfHeight);
-    // ctx.lineTo(halfWidth + horizontalSkew, halfHeight + verticalSkew);
-    // ctx.lineTo(-halfWidth + horizontalSkew, halfHeight + verticalSkew);
-    // ctx.fill();
 
     // flip y scale before drawing
     // flip x scale if facing left
@@ -183,6 +199,17 @@ var G_Character = (function(){
     var blockedWalking = false;
     var running = false;
     var startedJump = false;
+
+    if (this.dying) {
+      if (this.animationState.frame >= 96) {
+        this.dead = true;
+        this.animationState.state = animationStates.STANDING;
+        this.animationState.frame = 0;
+        return;
+      }
+      this.animationState.frame++;
+      return;
+    }
 
     if (gameState.input.isActive(keyBindings.UP)) {
       speed *= 2;

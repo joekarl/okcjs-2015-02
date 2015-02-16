@@ -32,7 +32,9 @@ var G_Gameplay = (function(){
         offsetX: gameState.width / 2,
         offsetY: gameState.height / 2,
       },
+      character: undefined,
       currentLevel: 1,
+      enemies: [],
       levelDetails: undefined,
       levelWidth: undefined,
       levelHeight: undefined,
@@ -61,8 +63,10 @@ var G_Gameplay = (function(){
     var gameplay = gameState.gameplay;
     var levelDetails = gameplay.levelDetails;
     var character = gameplay.character;
+    var enemies = gameplay.enemies;
     var camera = gameplay.camera;
     var characterSpawnXY;
+    var i, enemy;
 
     if (!gameplay.levelLoaded) {
       if (!gameplay.levelLoading) {
@@ -78,16 +82,48 @@ var G_Gameplay = (function(){
     gameplay.dt = clamp(gameplay.dt, 0, 1);
 
     // check death state
-    if (character.y < 0) {
+    if (character.y < 0 || character.dead) {
       characterSpawnXY = tileCoordToWorld(levelDetails.playerLocation.x, levelDetails.playerLocation.y);
       character.x = characterSpawnXY.x;
       character.y = characterSpawnXY.y - HALF_TILE_DIMENSION + character.halfHeight;
       character.vx = 0;
       character.vy = 0;
+      character.dying = false;
+      character.dead = false;
+    }
+
+    // update enemies
+    for (i = 0; i < enemies.length; ++i) {
+      enemy = enemies[i];
+      if (enemy.dead) {
+        enemies.splice(i, 1);
+        continue;
+      }
+      enemy.update(gameState);
     }
 
     // update player
     character.update(gameState);
+
+    // check collision with enemies
+    enemies.forEach(function(enemy){
+      if (enemy.dying || character.dying) {
+        return;
+      }
+      var enemyBounds = enemy.bounds;
+      var characterBounds = character.bounds;
+      if (G_Physics.checkCollision(enemyBounds, characterBounds)) {
+        if (character.jumping) {
+          // enemy dies
+          // character jumps again
+          enemy.die();
+          character.vy = 10;
+        } else {
+          // character dies
+          character.die();
+        }
+      }
+    });
 
     // update camera position based on character
     if (character.x < camera.x + CAMERA_PADDING) {
@@ -114,11 +150,7 @@ var G_Gameplay = (function(){
 
     drawLevel(gameState);
 
-    // var tileXY = worldCoordToTile(character.x, character.y);
-    // ctx.fillStyle = "#FF0";
-    // var tileWorldXY = tileCoordToWorld(tileXY.x, tileXY.y);
-    // ctx.fillRect(tileWorldXY.x - HALF_TILE_DIMENSION, tileWorldXY.y - HALF_TILE_DIMENSION,
-    //   TILE_DIMENSION, TILE_DIMENSION);
+    drawEnemies(gameState);
 
     drawCharacter(gameState);
 
@@ -198,6 +230,15 @@ var G_Gameplay = (function(){
     ctx.restore();
   }
 
+  function drawEnemies(gameState) {
+    var ctx = gameState.ctx2d;
+    gameState.gameplay.enemies.forEach(function(enemy){
+      ctx.save();
+      enemy.render(gameState);
+      ctx.restore();
+    });
+  }
+
   /*
    *
    */
@@ -207,45 +248,12 @@ var G_Gameplay = (function(){
     var tileChar, row;
     var tileCount = level.width * level.height;
     var levelDetails = gameplay.levelDetails = {};
-    levelDetails.levelTiles = [];
-    for (y = 0; y < level.height; ++y) {
-      levelDetails.levelTiles[level.height - y - 1] = [];
-      row = levelDetails.levelTiles[level.height - y - 1];
-      for (x = 0; x < level.width; ++x) {
-        tileChar = level.tiles.charAt(y * level.width + x);
-        row[x] = level.mapping[tileChar];
-
-        if (!row[x]) {
-          if (tileChar == "P") {
-            levelDetails.playerLocation = {
-              x: x,
-              y: level.height - y - 1,
-            };
-            row[x] = G_Tiles.tiles.EMPTY;
-          } else if (tileChar == "X") {
-            levelDetails.exitLocation = {
-              x: x,
-              y: level.height - y - 1,
-            };
-            row[x] = G_Tiles.tiles.EMPTY;
-          } else {
-            console.error("No tile for char " + tileChar + " at x:" + x + " y:" + y);
-            row[x] = G_Tiles.tiles.EMPTY;
-          }
-        }
-      }
-    }
-    levelDetails.width = level.width;
-    levelDetails.height = level.height;
-    levelDetails.name = level.name;
-    levelDetails.description = level.description;
-    var characterWorldXY = tileCoordToWorld(levelDetails.playerLocation.x, levelDetails.playerLocation.y);
-    gameplay.camera.x = characterWorldXY.x - gameplay.camera.offsetX;
 
     var imagesLoaded = 0;
+    var numberToLoad = 3;
 
     var checkIfImagesLoaded = function() {
-      if (imagesLoaded == 2) {
+      if (imagesLoaded == numberToLoad) {
         gameplay.levelLoaded = true;
         gameplay.levelLoading = false;
       }
@@ -268,6 +276,53 @@ var G_Gameplay = (function(){
     }
     characterImage.src = "character_sprite.png";
 
+    // load character image
+    var enemyImage = new Image();
+    enemyImage.onload = function loadLevelImage() {
+      imagesLoaded++;
+      checkIfImagesLoaded();
+    }
+    enemyImage.src = "supahpossum.png";
+
+    levelDetails.levelTiles = [];
+    for (y = 0; y < level.height; ++y) {
+      levelDetails.levelTiles[level.height - y - 1] = [];
+      row = levelDetails.levelTiles[level.height - y - 1];
+      for (x = 0; x < level.width; ++x) {
+        tileChar = level.tiles.charAt(y * level.width + x);
+        row[x] = level.mapping[tileChar];
+
+        if (!row[x]) {
+          if (tileChar == "P") {
+            levelDetails.playerLocation = {
+              x: x,
+              y: level.height - y - 1,
+            };
+            row[x] = G_Tiles.tiles.EMPTY;
+          } else if (tileChar == "X") {
+            levelDetails.exitLocation = {
+              x: x,
+              y: level.height - y - 1,
+            };
+            row[x] = G_Tiles.tiles.EMPTY;
+          } else if (tileChar == "E") {
+            var enemyCoord = tileCoordToWorld(x, level.height - y - 1);
+            gameplay.enemies.push(new G_Enemy(enemyCoord.x, enemyCoord.y, enemyImage));
+            console.log("Putting enemy at " + enemyCoord.x + ":" + enemyCoord.y);
+            row[x] = G_Tiles.tiles.EMPTY;
+          } else {
+            console.error("No tile for char " + tileChar + " at x:" + x + " y:" + y);
+            row[x] = G_Tiles.tiles.EMPTY;
+          }
+        }
+      }
+    }
+    levelDetails.width = level.width;
+    levelDetails.height = level.height;
+    levelDetails.name = level.name;
+    levelDetails.description = level.description;
+    var characterWorldXY = tileCoordToWorld(levelDetails.playerLocation.x, levelDetails.playerLocation.y);
+    gameplay.camera.x = characterWorldXY.x - gameplay.camera.offsetX;
     gameplay.character = new G_Character(
       characterWorldXY.x,
       characterWorldXY.y - HALF_TILE_DIMENSION + 16,

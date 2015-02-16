@@ -30,16 +30,16 @@ var G_Levels = [
     "BBBBBBBR                                                        LBBBBBBB" +
     "BBBBBBBR                                                        LBBBBBBB" +
     "BBBBBBBR                                                        LBBBBBBB" +
-    "BBBBBBBR                                                        LBBBBBBB" +
+    "BBBBBBBR                        E                               LBBBBBBB" +
     "BBBBBBBR                     lCffffcr           lCffffcr  lfcr  LBBBBBBB" +
     "BBBBBBBR                                                        LBBBBBBB" +
     "BBBBBBBR                               lCffffcr                 LBBBBBBB" +
     "BBBBBBBR                                                        LBBBBBBB" +
     "BBBBBBBR                      lCffffcr                          LBBBBBBB" +
-    "BBBBBBBR                                                        LBBBBBBB" +
+    "BBBBBBBR                                E                       LBBBBBBB" +
     "BBBBBBBR              lgrldr         lCffffcr                   LBBBBBBB" +
     "BBBBBBBR      lFr    lFR  LFr                                   LBBBBBBB" +
-    "BBBBBBBR P   lFB    lFBR  LBFr                                X LBBBBBBB" +
+    "BBBBBBBR P   lFB  E lFBR  LBFr                                X LBBBBBBB" +
     "BBBBBBBBFFFFFFBBFFFFFBBR  LBBFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBBBBBBBB" +
     "BBBBBBBBBBBBBBBBBBBBBBBR  LBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
   },
