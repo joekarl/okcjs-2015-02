@@ -45,7 +45,7 @@ var G_Character = (function(){
         var sprite = character.characterImage;
         var frame = character.animationState.frame;
         var frameY = 1;
-        var frameX = (frame / 8) % 6;
+        var frameX = (frame / 8) % 5;
         frameX = Math.floor(frameX);
 
 
@@ -277,7 +277,8 @@ var G_Character = (function(){
       this.animationState.state = animationStates.STANDING;
       this.animationState.frame = 0;
     } else if (running &&
-        this.animationState.state == animationStates.WALKING) {
+        (this.animationState.state == animationStates.WALKING ||
+         this.animationState.state == animationStates.JUMPING)) {
       console.log("Started running");
       this.animationState.state = animationStates.RUNNING;
       this.animationState.frame = 0;
