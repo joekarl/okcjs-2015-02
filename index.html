@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Title</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <style type="text/css">
+    body {
+      font-family: "Helvetica", "sans"
+    }
+    ul li {
+      font-size: 30px;
+      line-height: 60px;
+    }
+
+    .remark-code-line {
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+  <textarea id="source">
+
+class: center, middle
+
+# Gamedev with
+
+![](vanillajs.png)
+
+---
+
+class: center, middle
+
+## Karl Kirch
+## @joekarl
+
+---
+
+# What do you need for a game?
+
+* Get pixels to the screen
+* Gather user input
+* Move time forward
+* Play sound
+
+---
+
+## Get pixels to the screen
+
+* WebGL
+* Canvas 2D
+* SVG
+
+```javascript
+var canvas = document.getElementById("gameCanvas");
+var ctx = canvas.getContext("2d");
+
+ctx.fillStyle = "#FF0000";
+ctx.fillRect(0, 0, 50, 50);
+```
+
+---
+
+## Gather user input
+
+* Key Events
+* Touch Events
+* Mouse Events
+
+```javascript
+
+function Input() {
+  this.pressed = {};
+  window.addEventListener('keyup',
+    function(event) { this.onKeyup(event); }.bind(this), false);
+  window.addEventListener('keydown',
+    function(event) { this.onKeydown(event); }.bind(this), false);
+}
+
+Input.prototype.isActive = function(code) {
+  return this.pressed[code];
+}
+
+Input.prototype.onKeyup = function(e) {
+  delete this.pressed[e.keyCode];
+};
+
+Input.prototype.onKeydown = function(e) {
+  this.pressed[e.keyCode] = true;
+};
+
+```
+
+---
+
+## Move time forward
+
+* requestAnimationFrame - synced to display
+* setInterval - low resolution
+
+```javascript
+function updateRenderGame() {
+  window.requestAnimationFrame(updateRenderGame);
+}
+
+window.requestAnimationFrame(updateRenderGame);
+```
+
+---
+
+## Play sound
+
+* Web Audio API
+* Browser dependent codec support
+* Really kinda terrible (actually sound is terrible on all platforms)
+
+```javascript
+var music = new Audio('music.wav');
+music.addEventListener("canplay", function(){
+  music.play();
+});
+
+```
+
+---
+
+class: center, middle
+
+## [(not) Asteroids demo](not-asteroids/index.html)
+
+---
+
+class: center, middle
+
+## [Platformer demo](platformer/index.html)
+
+---
+
+class: center, middle
+
+## Questions?
+
+  </textarea>
+  <script src="remark.min.js">
+  </script>
+  <script>
+    var slideshow = remark.create();
+  </script>
+</body>
+</html>
